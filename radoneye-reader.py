@@ -30,8 +30,6 @@ class RadonEyeParser:
         return float(unpack_from("<f", buffer, offset)[0])
 
     def round_pci_l(value_pci_l: float) -> float:
-        if RADONEYE_ROUNDING_OFF:
-            return value_pci_l
         return round(value_pci_l, 2)
 
     def to_bq_m3(value_pci_l: float) -> float:
@@ -49,8 +47,8 @@ class RadonEyeParser:
         latest_pci_l = self.round_pci_l(self.read_float(data,2))
         day_avg_bq_m3 = self.to_bq_m3(self.read_float(data, 6))
         day_avg_pci_l = self.round_pci_l(self.read_float(data, 6))
-        month_avg_bq_m3 = self.to_bq_m3(self.read_float(msg_50, 10))
-        month_avg_pci_l = self.round_pci_l(self.read_float(msg_50, 10))
+        month_avg_bq_m3 = self.to_bq_m3(self.read_float(data, 10))
+        month_avg_pci_l = self.round_pci_l(self.read_float(data, 10))
         counts_current = self.read_short(data, 14)
         counts_previous = self.read_short(data, 16)
         counts_str = f"{counts_current}/{counts_previous}"
