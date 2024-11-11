@@ -11,7 +11,7 @@ import traceback
 import paho.mqtt.client as mqtt
 from bleak import BleakClient
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from struct import unpack
+from struct import unpack, unpack_from
 from string import Template
 import math
 
