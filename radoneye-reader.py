@@ -17,8 +17,8 @@ import math
 
 
 class RadonEyeParser:
-    def read_short(self, data: bytearray, start: int) -> int:
-        return unpack("<H", data[slice(start, start + 2)])[0]
+    def read_short(buffer: bytearray, offset: int) -> int:
+        return unpack_from("<H", buffer, offset)[0]
 
     def read_str(self, data: bytearray, start: int, length: int) -> str:
         return data[slice(start, start + length)].decode()
@@ -26,26 +26,41 @@ class RadonEyeParser:
     def to_pci_l(self, value_bq_m3: int) -> float:
         return round(value_bq_m3 / 37, 2)
 
+    def read_float(buffer: bytearray, offset: int) -> float:
+        return float(unpack_from("<f", buffer, offset)[0])
+
+    def round_pci_l(value_pci_l: float) -> float:
+        if RADONEYE_ROUNDING_OFF:
+            return value_pci_l
+        return round(value_pci_l, 2)
+
+    def to_bq_m3(value_pci_l: float) -> float:
+        return float(round(value_pci_l * 37))
+
+    def read_str_wl(buffer: bytearray, offset: int) -> str:
+        # string length is encoded as first byte followed by string content with optional new line
+        return buffer[(offset + 1) : (offset + 1 + buffer[offset])].decode()
+
     def parse_sensor_data(self, data: bytearray) -> dict:
-        serial = self.read_str(data, 8, 3) + self.read_str(data, 2, 6) + self.read_str(data, 11, 4)
-        model = self.read_str(data, 16, 6)
-        version = self.read_str(data, 22, 6)
-        latest_bq_m3 = self.read_short(data, 33)
-        latest_pci_l = self.to_pci_l(latest_bq_m3)
-        day_avg_bq_m3 = self.read_short(data, 35)
-        day_avg_pci_l = self.to_pci_l(day_avg_bq_m3)
-        month_avg_bq_m3 = self.read_short(data, 37)
-        month_avg_pci_l = self.to_pci_l(month_avg_bq_m3)
-        counts_current = self.read_short(data, 39)
-        counts_previous = self.read_short(data, 41)
+        serial = "32" #self.read_str(data, 8, 3) + self.read_str(data, 2, 6) + self.read_str(data, 11, 4)
+        model = "V1" #self.read_str(data, 16, 6)
+        version = "1" #self.read_str(data, 22, 6)
+        latest_bq_m3 = self.to_bq_m3(self.read_float(data, 2))
+        latest_pci_l = self.round_pci_l(self.read_float(data,2))
+        day_avg_bq_m3 = self.to_bq_m3(self.read_float(data, 6))
+        day_avg_pci_l = self.round_pci_l(self.read_float(data, 6))
+        month_avg_bq_m3 = self.to_bq_m3(self.read_float(msg_50, 10))
+        month_avg_pci_l = self.round_pci_l(self.read_float(msg_50, 10))
+        counts_current = self.read_short(data, 14)
+        counts_previous = self.read_short(data, 16)
         counts_str = f"{counts_current}/{counts_previous}"
-        uptime_minutes = self.read_short(data, 43)
-        uptime_days = math.floor(uptime_minutes / (60 * 24))
-        uptime_hours = math.floor(uptime_minutes % (60 * 24) / 60)
+        uptime_minutes = 0.0 #self.read_short(data, 43)
+        uptime_days = 0.0 #math.floor(uptime_minutes / (60 * 24))
+        uptime_hours = 0.0 #math.floor(uptime_minutes % (60 * 24) / 60)
         uptime_mins = uptime_minutes % 60
         uptime_str = f"{uptime_days}d {uptime_hours:02}:{uptime_mins:02}"
-        peak_bq_m3 = self.read_short(data, 51)
-        peak_pci_l = self.to_pci_l(peak_bq_m3)
+        peak_bq_m3 = 0.0 #self.read_short(data, 51)
+        peak_pci_l = 0.0 #self.to_pci_l(peak_bq_m3)
 
         return {
             "serial": serial,
@@ -68,10 +83,10 @@ class RadonEyeParser:
 
 
 class RadonEyeReader:
-    UUID_COMMAND = "00001524-0000-1000-8000-00805f9b34fb"
-    UUID_CURRENT = "00001525-0000-1000-8000-00805f9b34fb"
+    UUID_COMMAND = "00001524-1212-efde-1523-785feabcd123"
+    UUID_CURRENT = "00001525-1212-efde-1523-785feabcd123"
 
-    COMMAND_CURRENT = 0x40
+    COMMAND_CURRENT = 0x50
 
     VENDOR = "Ecosense"
     DEVICE = "RadonEye"
