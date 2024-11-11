@@ -17,7 +17,7 @@ import math
 
 
 class RadonEyeParser:
-    def read_short(buffer: bytearray, offset: int) -> int:
+    def read_short(self, buffer: bytearray, offset: int) -> int:
         return unpack_from("<H", buffer, offset)[0]
 
     def read_str(self, data: bytearray, start: int, length: int) -> str:
@@ -26,16 +26,16 @@ class RadonEyeParser:
     def to_pci_l(self, value_bq_m3: int) -> float:
         return round(value_bq_m3 / 37, 2)
 
-    def read_float(buffer: bytearray, offset: int) -> float:
+    def read_float(self, buffer: bytearray, offset: int) -> float:
         return float(unpack_from("<f", buffer, offset)[0])
 
-    def round_pci_l(value_pci_l: float) -> float:
+    def round_pci_l(self, value_pci_l: float) -> float:
         return round(value_pci_l, 2)
 
-    def to_bq_m3(value_pci_l: float) -> float:
+    def to_bq_m3(self, value_pci_l: float) -> float:
         return float(round(value_pci_l * 37))
 
-    def read_str_wl(buffer: bytearray, offset: int) -> str:
+    def read_str_wl(self, buffer: bytearray, offset: int) -> str:
         # string length is encoded as first byte followed by string content with optional new line
         return buffer[(offset + 1) : (offset + 1 + buffer[offset])].decode()
 
@@ -44,7 +44,7 @@ class RadonEyeParser:
         model = "V1" #self.read_str(data, 16, 6)
         version = "1" #self.read_str(data, 22, 6)
         latest_bq_m3 = self.to_bq_m3(self.read_float(data, 2))
-        latest_pci_l = self.round_pci_l(self.read_float(data,2))
+        latest_pci_l = self.round_pci_l(self.read_float(data, 2))
         day_avg_bq_m3 = self.to_bq_m3(self.read_float(data, 6))
         day_avg_pci_l = self.round_pci_l(self.read_float(data, 6))
         month_avg_bq_m3 = self.to_bq_m3(self.read_float(data, 10))
